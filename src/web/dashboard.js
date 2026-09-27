@@ -88,6 +88,18 @@ export function setupDashboard(app, client) {
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
+    // CORS middleware (allows Vercel or external web frontends to call Railway API)
+    app.use((req, res, next) => {
+        const allowedOrigin = process.env.CORS_ORIGIN || '*';
+        res.header('Access-Control-Allow-Origin', allowedOrigin);
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Dashboard-Key');
+        if (req.method === 'OPTIONS') {
+            return res.sendStatus(200);
+        }
+        next();
+    });
+
     // Serve static dashboard web assets
     app.use(express.static(publicPath));
 

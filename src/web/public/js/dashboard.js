@@ -198,7 +198,10 @@ class VoidDashboard {
             headers['Content-Type'] = 'application/json';
         }
 
-        const res = await fetch(url, { ...options, headers });
+        const baseUrl = window.API_BASE_URL || localStorage.getItem('void_api_base_url') || '';
+        const endpoint = baseUrl ? `${baseUrl.replace(/\/$/, '')}${url}` : url;
+
+        const res = await fetch(endpoint, { ...options, headers });
         if (res.status === 401) {
             this.logout();
             throw new Error('Unauthorized');
