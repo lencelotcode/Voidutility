@@ -525,26 +525,34 @@ class VoidDashboard {
         try {
             const data = await this.apiFetch(`/api/commands?guildId=${this.selectedGuildId}`);
             if (!data || !data.categories) return;
-            this.commandsData = data;
-
-            const navCount = document.getElementById('nav-cmd-count');
-            if (navCount) navCount.textContent = data.totalCommands;
-
-            const kpiCount = document.getElementById('kpi-commands');
-            if (kpiCount) kpiCount.textContent = data.totalCommands;
-
-            this.renderCategoryPills(data.categories);
-            this.renderCommands();
+            this.applyCommandSnapshot(data);
         } catch (err) {
             console.error('Failed to load commands:', err);
         }
     }
 
+    applyCommandSnapshot(data) {
+        if (!data || !data.categories) return;
+        this.commandsData = data;
+
+        const navCount = document.getElementById('nav-cmd-count');
+        if (navCount) navCount.textContent = data.totalCommands;
+
+        const kpiCount = document.getElementById('kpi-commands');
+        if (kpiCount) kpiCount.textContent = data.totalCommands;
+
+        this.renderCategoryPills(data.categories);
+        this.renderCommands();
+    }
+
     renderCategoryPills(categories) {
         const bar = document.getElementById('category-pills-bar');
         if (!bar) return;
+
+        const currentFilter = this.activeCategoryFilter || 'all';
+
         bar.innerHTML = `
-            <button class="category-pill active" data-category="all">
+            <button class="category-pill ${currentFilter === 'all' ? 'active' : ''}" data-category="all">
                 ${StreamlineCategoryIcons.all}
                 <span>All Modules</span>
             </button>
@@ -552,7 +560,7 @@ class VoidDashboard {
 
         categories.forEach(cat => {
             const btn = document.createElement('button');
-            btn.className = 'category-pill';
+            btn.className = `category-pill ${currentFilter === cat.key ? 'active' : ''}`;
             btn.dataset.category = cat.key;
             const iconSvg = StreamlineCategoryIcons[cat.key.toLowerCase()] || StreamlineCategoryIcons.default;
             btn.innerHTML = `${iconSvg} <span>${cat.displayName}</span>`;
@@ -601,20 +609,27 @@ class VoidDashboard {
             if (matchingCommands.length === 0) return;
             totalShown += matchingCommands.length;
 
-            const card = document.createElement('div');
-            card.className = 'editorial-category-card';
-
             const isCatDisabled = Boolean(cat.categoryDisabled);
             const iconSvg = StreamlineCategoryIcons[cat.key.toLowerCase()] || StreamlineCategoryIcons.default;
+
+            const card = document.createElement('div');
+            card.className = `editorial-category-card ${isCatDisabled ? 'is-cat-disabled' : ''}`;
 
             card.innerHTML = `
                 <div class="cat-header-row">
                     <div class="cat-header-title">
                         <div class="cat-icon-symbol">${iconSvg}</div>
-                        <h3 class="cat-name-h3">${cat.displayName}</h3>
-                        <span class="cat-qty-badge">${matchingCommands.length} commands</span>
+                        <div>
+                            <h3 class="cat-name-h3" style="margin: 0; line-height: 1.2;">${cat.displayName}</h3>
+                            <span style="font-size: 11.5px; color: ${isCatDisabled ? '#BA3C2A' : 'var(--ink-muted)'}; font-weight: 600;">
+                                ${isCatDisabled ? '⚠️ Entire Module is Disabled' : `${cat.enabledCount} of ${cat.totalCount} active`}
+                            </span>
+                        </div>
+                        <span class="cat-qty-badge" style="${isCatDisabled ? 'background: rgba(186,60,42,0.12); color: #BA3C2A;' : ''}">
+                            ${matchingCommands.length} commands
+                        </span>
                     </div>
-                    <label class="editorial-switch" title="Toggle entire category">
+                    <label class="editorial-switch" title="${isCatDisabled ? 'Click to enable entire module' : 'Click to disable entire module'}">
                         <input type="checkbox" ${!isCatDisabled ? 'checked' : ''} data-cat-key="${cat.key}">
                         <span class="slider-pill"></span>
                     </label>
@@ -624,18 +639,25 @@ class VoidDashboard {
                         const isCmdDisabled = cat.disabledCommandNames.includes(cmd.name);
                         const isProtected = Boolean(cmd.protected);
                         const isChecked = !isCmdDisabled && !isCatDisabled;
+                        const isInputDisabled = isProtected || isCatDisabled;
+                        const switchTitle = isProtected
+                            ? 'Protected core command (cannot be disabled)'
+                            : isCatDisabled
+                            ? 'Enable this module switch above to configure commands'
+                            : (isChecked ? 'Click to disable command' : 'Click to enable command');
+
                         return `
-                            <div class="single-command-tile">
+                            <div class="single-command-tile ${isCatDisabled ? 'dimmed' : ''}">
                                 <div class="cmd-info-group">
                                     <span class="cmd-slash-name">/${cmd.name}</span>
                                     <span class="cmd-explanation" title="${this.escapeHtml(cmd.description || '')}">
                                         ${this.escapeHtml(cmd.description || 'No description available.')}
                                     </span>
                                 </div>
-                                <label class="editorial-switch" title="${isProtected ? 'Protected core command (cannot be disabled)' : 'Toggle command'}">
+                                <label class="editorial-switch" title="${switchTitle}">
                                     <input type="checkbox" 
                                            ${isChecked ? 'checked' : ''} 
-                                           ${isProtected ? 'disabled' : ''} 
+                                           ${isInputDisabled ? 'disabled' : ''} 
                                            data-cmd-name="${cmd.name}"
                                            data-cat-key="${cat.key}">
                                     <span class="slider-pill"></span>
@@ -651,7 +673,14 @@ class VoidDashboard {
             if (catCheckbox) {
                 catCheckbox.addEventListener('change', async (e) => {
                     const enabled = e.target.checked;
-                    await this.toggleCategory(cat.key, enabled);
+                    catCheckbox.disabled = true;
+                    try {
+                        await this.toggleCategory(cat.key, enabled);
+                    } catch (err) {
+                        catCheckbox.checked = !enabled;
+                    } finally {
+                        catCheckbox.disabled = false;
+                    }
                 });
             }
 
@@ -660,7 +689,14 @@ class VoidDashboard {
                 cmdCheckbox.addEventListener('change', async (e) => {
                     const cmdName = e.target.dataset.cmdName;
                     const enabled = e.target.checked;
-                    await this.toggleCommand(cmdName, enabled);
+                    cmdCheckbox.disabled = true;
+                    try {
+                        await this.toggleCommand(cmdName, enabled);
+                    } catch (err) {
+                        cmdCheckbox.checked = !enabled;
+                    } finally {
+                        cmdCheckbox.disabled = false;
+                    }
                 });
             });
 
@@ -696,14 +732,18 @@ class VoidDashboard {
 
             if (res && res.success) {
                 this.showToast(`/${commandName} is now ${enabled ? 'ENABLED' : 'DISABLED'}`, 'success');
-                this.loadCommands();
+                if (res.snapshot) {
+                    this.applyCommandSnapshot(res.snapshot);
+                } else {
+                    await this.loadCommands();
+                }
             } else {
-                this.showToast(res.error || 'Failed to toggle command', 'error');
-                this.loadCommands();
+                this.showToast(res?.error || 'Failed to toggle command', 'error');
+                await this.loadCommands();
             }
         } catch (err) {
             this.showToast(err.message, 'error');
-            this.loadCommands();
+            await this.loadCommands();
         }
     }
 
@@ -720,14 +760,18 @@ class VoidDashboard {
 
             if (res && res.success) {
                 this.showToast(`Module '${categoryKey}' is now ${enabled ? 'ENABLED' : 'DISABLED'}`, 'success');
-                this.loadCommands();
+                if (res.snapshot) {
+                    this.applyCommandSnapshot(res.snapshot);
+                } else {
+                    await this.loadCommands();
+                }
             } else {
-                this.showToast(res.error || 'Failed to toggle module', 'error');
-                this.loadCommands();
+                this.showToast(res?.error || 'Failed to toggle module', 'error');
+                await this.loadCommands();
             }
         } catch (err) {
             this.showToast(err.message, 'error');
-            this.loadCommands();
+            await this.loadCommands();
         }
     }
 
@@ -794,7 +838,10 @@ class VoidDashboard {
 
             // 2. Welcome System
             const welcomeToggle = document.getElementById('setting-welcome-toggle');
-            if (welcomeToggle) welcomeToggle.checked = w.enabled !== false;
+            if (welcomeToggle) {
+                welcomeToggle.checked = w.enabled !== false;
+                this.updateWelcomeToggleUI(welcomeToggle.checked);
+            }
 
             const welcomeChanSelect = document.getElementById('setting-welcome-chan');
             if (welcomeChanSelect) welcomeChanSelect.value = w.channelId || c.welcomeChannel || '';
@@ -819,7 +866,10 @@ class VoidDashboard {
 
             // 3. Goodbye System
             const goodbyeToggle = document.getElementById('setting-goodbye-toggle');
-            if (goodbyeToggle) goodbyeToggle.checked = Boolean(w.goodbyeEnabled);
+            if (goodbyeToggle) {
+                goodbyeToggle.checked = Boolean(w.goodbyeEnabled);
+                this.updateGoodbyeToggleUI(goodbyeToggle.checked);
+            }
 
             const goodbyeChanSelect = document.getElementById('setting-goodbye-chan');
             if (goodbyeChanSelect) goodbyeChanSelect.value = w.goodbyeChannelId || '';
@@ -886,6 +936,28 @@ class VoidDashboard {
             } else {
                 simThumb.classList.add('hidden');
                 simThumb.removeAttribute('src');
+            }
+        }
+    }
+
+    updateWelcomeToggleUI(enabled) {
+        const welcomeFormContainer = document.getElementById('setting-welcome-chan')?.closest('.broadcast-two-column');
+        if (welcomeFormContainer) {
+            welcomeFormContainer.style.opacity = enabled ? '1' : '0.45';
+            welcomeFormContainer.style.pointerEvents = enabled ? 'auto' : 'none';
+            welcomeFormContainer.style.transition = 'opacity 0.2s ease';
+        }
+    }
+
+    updateGoodbyeToggleUI(enabled) {
+        const goodbyeChan = document.getElementById('setting-goodbye-chan');
+        const goodbyeSection = goodbyeChan ? goodbyeChan.closest('.editorial-card') : null;
+        if (goodbyeSection) {
+            const innerGrid = goodbyeSection.querySelector('.broadcast-two-column') || goodbyeSection.querySelector('div[style*="display: flex"]');
+            if (innerGrid) {
+                innerGrid.style.opacity = enabled ? '1' : '0.45';
+                innerGrid.style.pointerEvents = enabled ? 'auto' : 'none';
+                innerGrid.style.transition = 'opacity 0.2s ease';
             }
         }
     }
@@ -1986,6 +2058,8 @@ class VoidDashboard {
         document.getElementById('guild-settings-form')?.addEventListener('submit', (e) => this.saveGuildConfig(e));
 
         // Welcome Simulator & Test Dispatch Listeners
+        document.getElementById('setting-welcome-toggle')?.addEventListener('change', (e) => this.updateWelcomeToggleUI(e.target.checked));
+        document.getElementById('setting-goodbye-toggle')?.addEventListener('change', (e) => this.updateGoodbyeToggleUI(e.target.checked));
         document.getElementById('setting-welcome-title')?.addEventListener('input', () => this.updateWelcomeSimulator());
         document.getElementById('setting-welcome-color')?.addEventListener('input', () => this.updateWelcomeSimulator());
         document.getElementById('setting-welcome-msg')?.addEventListener('input', () => this.updateWelcomeSimulator());

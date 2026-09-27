@@ -944,6 +944,23 @@ body {
     border-radius: var(--radius-lg);
     padding: 24px 28px;
     box-shadow: var(--shadow-soft);
+    transition: var(--transition);
+}
+
+.editorial-category-card.is-cat-disabled {
+    background: #FAF8F5;
+    border-color: #E8E1D5;
+}
+
+.editorial-category-card.is-cat-disabled .commands-card-grid {
+    opacity: 0.55;
+    pointer-events: none;
+    user-select: none;
+}
+
+.single-command-tile.dimmed {
+    opacity: 0.6;
+    background: #F4EFEA;
 }
 
 .cat-header-row {

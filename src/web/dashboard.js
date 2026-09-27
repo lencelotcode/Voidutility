@@ -458,7 +458,9 @@ export function setupDashboard(app, client) {
             }
 
             logger.info(`Dashboard toggled command ${commandName} -> ${enabled ? 'ENABLED' : 'DISABLED'} on guild ${guildId}`);
-            return res.json({ success: true, result });
+            const config = await getGuildConfig(client, guildId);
+            const snapshot = getCommandAccessSnapshot(client, config);
+            return res.json({ success: true, result, snapshot });
         } catch (error) {
             return res.status(400).json({ error: error.message });
         }
@@ -479,7 +481,9 @@ export function setupDashboard(app, client) {
             }
 
             logger.info(`Dashboard toggled category ${categoryKey} -> ${enabled ? 'ENABLED' : 'DISABLED'} on guild ${guildId}`);
-            return res.json({ success: true, result });
+            const config = await getGuildConfig(client, guildId);
+            const snapshot = getCommandAccessSnapshot(client, config);
+            return res.json({ success: true, result, snapshot });
         } catch (error) {
             return res.status(400).json({ error: error.message });
         }
