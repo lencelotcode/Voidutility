@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoidUtility • Private Bot Executive Suite</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22none%22 stroke=%22%23113E35%22 stroke-width=%228%22/><polygon points=%2250,22 75,70 25,70%22 fill=%22none%22 stroke=%22%23113E35%22 stroke-width=%227%22/></svg>">
+</head>
+<body>
+    <!-- Main Navigation Bar (Minimalist Executive Header) -->
+    <header class="navbar">
+        <div class="nav-container">
+            <!-- Brand Logo -->
+            <a href="#" class="brand-link" onclick="dashboard.switchTab('overview'); return false;">
+                <div class="brand-geometric-icon">
+                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="17" stroke="#113E35" stroke-width="2.5"/>
+                        <polygon points="20,8 31,30 9,30" stroke="#113E35" stroke-width="2.2" stroke-linejoin="round"/>
+                        <circle cx="20" cy="22" r="3.5" fill="#E29578"/>
+                    </svg>
+                </div>
+                <div class="brand-name-group">
+                    <span class="brand-title">VoidUtility</span>
+                </div>
+            </a>
+
+            <!-- Minimal Segmented Pill Navigation (No Clutter, Clean Typography) -->
+            <nav class="nav-links">
+                <button type="button" class="nav-btn active" data-tab="overview" onclick="dashboard.switchTab('overview')">Overview</button>
+                <button type="button" class="nav-btn" data-tab="commands" onclick="dashboard.switchTab('commands')">Commands</button>
+                <button type="button" class="nav-btn" data-tab="studio" onclick="dashboard.switchTab('broadcast')">Studio</button>
+                <button type="button" class="nav-btn" data-tab="community" onclick="dashboard.switchTab('community')">Community</button>
+                <button type="button" class="nav-btn" data-tab="settings" onclick="dashboard.switchTab('settings')">Settings</button>
+                <button type="button" class="nav-btn" data-tab="logs" onclick="dashboard.switchTab('logs')">Console</button>
+            </nav>
+
+            <!-- Right Controls: Sleek Server Picker & Clean Owner Pill -->
+            <div class="nav-actions">
+                <div class="guild-pill-wrapper">
+                    <span class="status-indicator-dot"></span>
+                    <select id="active-guild-select" class="clean-select-pill">
+                        <option value="">Connecting server...</option>
+                    </select>
+                </div>
+                
+                <button id="auth-state-btn" class="nav-auth-pill" onclick="dashboard.handleAuthButton()">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <span>Owner Active</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Authentication Overlay Modal -->
+    <div id="login-modal" class="auth-modal-overlay">
+        <div class="auth-card" style="position: relative;">
+            <button type="button" class="auth-close-x" onclick="dashboard.hideLogin()" aria-label="Close" style="position: absolute; top: 18px; right: 18px; background: transparent; border: none; font-size: 18px; color: var(--ink-muted); cursor: pointer; font-weight: 700; line-height: 1;">✕</button>
+            <div class="auth-card-top">
+                <div class="auth-icon-shape">
+                    <svg class="streamline-icon xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                </div>
+                <h3>Authorize Owner Access</h3>
+                <p>Enter your private server dashboard key to unlock full bot configuration.</p>
+            </div>
+            <form id="login-form">
+                <div class="clean-form-group">
+                    <label for="password-input">Owner Access Key</label>
+                    <div class="clean-input-box-wrapper" style="position: relative;">
+                        <input type="password" id="password-input" class="clean-input-box" placeholder="Default: voidowner" autocomplete="current-password" required>
+                        <button type="button" id="toggle-pwd-btn" class="show-pwd-btn" title="Toggle visibility">
+                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="login-error" class="clean-error-banner hidden"></div>
+                <button type="submit" class="btn-solid-dark btn-block">
+                    Unlock Dashboard
+                </button>
+            </form>
+            <div class="auth-footer-hint">
+                Configured in <code>.env</code> as <code>DASHBOARD_PASSWORD</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="page-container">
+        <!-- ========================================================== -->
+        <!-- TAB 1: OVERVIEW & EDITORIAL HERO -->
+        <!-- ========================================================== -->
+        <section id="tab-overview" class="tab-pane active">
+            <!-- Dribbble-Style Hero Banner Section -->
+            <div class="hero-split-card">
+                <!-- Left: Headline & Copy -->
+                <div class="hero-left">
+                    <div class="hero-tag-pill">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--peach);">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                        <span>Private Server Utility • v2.1.0</span>
+                    </div>
+                    <h1 class="hero-headline">
+                        Command your<br>
+                        Discord bot<br>
+                        today.
+                    </h1>
+                    <p class="hero-subtext">
+                        VoidUtility is a dedicated management platform built for our private server. Control 98 commands, edit presence, and broadcast rich embeds without touching code.
+                    </p>
+                    <div class="hero-cta-group">
+                        <button class="btn-solid-dark" onclick="dashboard.switchTab('commands')">
+                            Manage Commands
+                        </button>
+                        <button class="btn-text-link" onclick="dashboard.switchTab('broadcast')">
+                            Broadcast message <span>→</span>
+                        </button>
+                    </div>
+
+                    <!-- Quick Mini Metric Badges with Streamline Icons -->
+                    <div class="hero-stat-row">
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-val" id="kpi-guilds">1</span>
+                            <span class="hero-stat-lbl">
+                                <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 3px;">
+                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                                    <line x1="6" y1="6" x2="6.01" y2="6"/>
+                                    <line x1="6" y1="18" x2="6.01" y2="18"/>
+                                </svg>
+                                Server Host
+                            </span>
+                        </div>
+                        <div class="hero-stat-sep">/</div>
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-val" id="kpi-members">--</span>
+                            <span class="hero-stat-lbl">
+                                <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 3px;">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                                Members
+                            </span>
+                        </div>
+                        <div class="hero-stat-sep">/</div>
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-val" id="kpi-commands">98</span>
+                            <span class="hero-stat-lbl">
+                                <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 3px;">
+                                    <polyline points="4 17 10 11 4 5"/>
+                                    <line x1="12" y1="19" x2="20" y2="19"/>
+                                </svg>
+                                Commands
+                            </span>
+                        </div>
+                        <div class="hero-stat-sep">/</div>
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-val" id="top-ping-val">-- ms</span>
+                            <span class="hero-stat-lbl">
+                                <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 3px;">
+                                    <circle cx="12" cy="12" r="2"/>
+                                    <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+                                </svg>
+                                Gateway Ping
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Artistic Stylized Graphic Console (Exact Dribbble Art Style) -->
+                <div class="hero-right">
+                    <div class="hero-graphic-canvas">
+                        <!-- Organic Background Blobs -->
+                        <div class="blob-terracotta-left"></div>
+                        <div class="blob-pine-right"></div>
+                        <div class="grid-pixel-cluster">
+                            <span></span><span></span><span></span><span></span>
+                            <span></span><span></span><span></span><span></span>
+                        </div>
+
+                        <!-- Stylized Main Console Card -->
+                        <div class="graphic-window-card">
+                            <div class="window-topbar">
+                                <div class="window-decor-left">
+                                    <div class="w-circle-dot"></div>
+                                </div>
+                                <div class="window-decor-right">
+                                    <span class="w-btn-bar">–</span>
+                                    <span class="w-btn-bar">□</span>
+                                    <span class="w-btn-bar">✕</span>
+                                </div>
+                            </div>
+                            <div class="window-content-art">
+                                <div class="mockup-search-capsule">
+                                    <div class="capsule-input-line">
+                                        <span class="cursor-pointer-art">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                                <path d="M5.5 3.5L18.5 11.5L12 13.5L9.5 20.5L5.5 3.5Z" fill="#113E35" stroke="#FFF" stroke-width="1.5"/>
+                                            </svg>
+                                        </span>
+                                        <span class="capsule-placeholder">/ban, /ticket, /help...</span>
+                                    </div>
+                                    <div class="capsule-btn">Active</div>
+                                </div>
+
+                                <div class="mockup-node-tree">
+                                    <!-- Flow Line Connector -->
+                                    <svg class="flow-svg" viewBox="0 0 260 90" fill="none">
+                                        <path d="M40 20 C100 20, 110 70, 180 70" stroke="#113E35" stroke-width="2" stroke-dasharray="4 4"/>
+                                    </svg>
+
+                                    <!-- Node 1: Streamline Shield Check -->
+                                    <div class="floating-node node-1">
+                                        <div class="node-icon">
+                                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--pine-deep);">
+                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                                <polyline points="9 12 11 14 15 10"/>
+                                            </svg>
+                                        </div>
+                                        <div class="node-text">
+                                            <strong>Moderation</strong>
+                                            <span>Active (15 cmds)</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Node 2: Streamline Lightning Bolt -->
+                                    <div class="floating-node node-2">
+                                        <div class="node-icon">
+                                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #D97706;">
+                                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                            </svg>
+                                        </div>
+                                        <div class="node-text">
+                                            <strong id="mockup-live-uptime">Uptime 99.9%</strong>
+                                            <span class="node-badge-ok">Optimal</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Streamline Radar / Eye Speech Bubble -->
+                                <div class="floating-speech-bubble">
+                                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--pine-deep);">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <span class="bubble-text">Listening to server events...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metric Cards Row with Streamline Icons -->
+            <div class="stats-row-container">
+                <div class="editorial-card">
+                    <div class="card-icon-box pine-tint">
+                        <svg class="streamline-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                            <rect x="9" y="9" width="6" height="6"/>
+                            <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>
+                        </svg>
+                    </div>
+                    <div class="card-metric-info">
+                        <span class="metric-title">Memory Allocation</span>
+                        <div class="metric-big-num" id="kpi-memory">-- MB</div>
+                        <div class="metric-caption" id="kpi-mem-percent">Heap footprint</div>
+                    </div>
+                </div>
+
+                <div class="editorial-card">
+                    <div class="card-icon-box peach-tint">
+                        <svg class="streamline-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="13" r="8"/>
+                            <path d="M12 9v4l2.5 2.5M12 2v3M9 2h6M19 6l-1.5 1.5"/>
+                        </svg>
+                    </div>
+                    <div class="card-metric-info">
+                        <span class="metric-title">Continuous Uptime</span>
+                        <div class="metric-big-num" id="top-uptime-val">--</div>
+                        <div class="metric-caption">Online since startup</div>
+                    </div>
+                </div>
+
+                <div class="editorial-card">
+                    <div class="card-icon-box cream-tint">
+                        <svg class="streamline-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="7" rx="2"/>
+                            <rect x="2" y="14" width="20" height="7" rx="2"/>
+                            <line x1="6" y1="6.5" x2="6.01" y2="6.5" stroke-width="3"/>
+                            <line x1="6" y1="17.5" x2="6.01" y2="17.5" stroke-width="3"/>
+                            <line x1="10" y1="6.5" x2="14" y2="6.5"/>
+                            <line x1="10" y1="17.5" x2="14" y2="17.5"/>
+                        </svg>
+                    </div>
+                    <div class="card-metric-info">
+                        <span class="metric-title">System Environment</span>
+                        <div class="metric-big-num" id="spec-node">--</div>
+                        <div class="metric-caption" id="spec-platform">Node.js Engine</div>
+                    </div>
+                </div>
+
+                <div class="editorial-card">
+                    <div class="card-icon-box terracotta-tint">
+                        <svg class="streamline-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                            <path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/>
+                            <path d="M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/>
+                        </svg>
+                    </div>
+                    <div class="card-metric-info">
+                        <span class="metric-title">Database Storage</span>
+                        <div class="metric-big-num" id="spec-db-mode">--</div>
+                        <div class="metric-caption" id="db-status-text">Connection Layer</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- TAB 2: COMMAND CONTROL CENTER -->
+        <!-- ========================================================== -->
+        <section id="tab-commands" class="tab-pane">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Command Control Center</h2>
+                    <p>Toggle whole categories or individual slash commands for your server.</p>
+                </div>
+                <div class="search-filter-box">
+                    <div class="search-icon-inside">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </div>
+                    <input type="text" id="command-search" class="clean-search-field" placeholder="Search 98 commands...">
+                </div>
+            </div>
+
+            <!-- Category Pills Bar with Streamline Icons -->
+            <div id="category-pills-bar" class="editorial-pills-row">
+                <button class="category-pill active" data-category="all">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    All Modules
+                </button>
+            </div>
+
+            <!-- Categories & Commands Grid -->
+            <div id="categories-container" class="categories-column">
+                <div class="empty-state-card">Loading command catalog...</div>
+            </div>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- TAB 3: BOT IDENTITY & PRESENCE -->
+        <!-- ========================================================== -->
+        <section id="tab-presence" class="tab-pane">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Bot Identity & Discord Presence</h2>
+                    <p>Configure how VoidUtility appears in the server member list in real-time.</p>
+                </div>
+                <div class="subtab-pill-bar" style="margin-bottom: 0;">
+                    <button type="button" class="subtab-btn" onclick="dashboard.switchTab('settings')">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Server Setup
+                    </button>
+                    <button type="button" class="subtab-btn active" onclick="dashboard.switchTab('presence')">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        Bot Presence
+                    </button>
+                </div>
+            </div>
+
+            <div class="presence-two-column">
+                <!-- Left: Presence Form -->
+                <div class="editorial-card form-card">
+                    <form id="presence-form">
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-1">
+                                <label for="presence-status-select">Status Indicator</label>
+                                <select id="presence-status-select" class="clean-input-box">
+                                    <option value="online">🟢 Online (Active)</option>
+                                    <option value="idle">🟡 Idle (Away)</option>
+                                    <option value="dnd">🔴 Do Not Disturb (DND)</option>
+                                    <option value="invisible">⚪ Invisible (Offline Appearance)</option>
+                                </select>
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="presence-type-select">Activity Format</label>
+                                <select id="presence-type-select" class="clean-input-box">
+                                    <option value="CUSTOM">Custom Status</option>
+                                    <option value="PLAYING">Playing</option>
+                                    <option value="LISTENING">Listening to</option>
+                                    <option value="WATCHING">Watching</option>
+                                    <option value="STREAMING">Streaming</option>
+                                    <option value="COMPETING">Competing in</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="clean-form-group">
+                            <label for="presence-name-input">Status Bio / Activity Label</label>
+                            <input type="text" id="presence-name-input" class="clean-input-box" placeholder="e.g. Managing Void Server • /help" maxlength="128">
+                            <span class="field-hint">This text displays under VoidUtility's username in Discord.</span>
+                        </div>
+
+                        <div class="form-cta-row">
+                            <button type="submit" class="btn-solid-dark">
+                                Apply Presence Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right: Realistic Profile Preview Card -->
+                <div class="editorial-card preview-card">
+                    <span class="preview-header-label">Discord Member List Preview</span>
+                    <div class="discord-preview-box">
+                        <div class="discord-member-item">
+                            <div class="avatar-beacon-wrap">
+                                <img id="mockup-avatar" src="" alt="Bot Avatar">
+                                <span id="mockup-status-dot" class="presence-dot online"></span>
+                            </div>
+                            <div class="member-detail-lines">
+                                <div class="name-badge-row">
+                                    <span id="mockup-username" class="d-user-name">VoidUtility</span>
+                                    <span class="d-bot-tag">BOT</span>
+                                </div>
+                                <span id="mockup-activity-text" class="d-status-msg">Custom Status</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- TAB 4: SERVER SETTINGS -->
+        <!-- ========================================================== -->
+        <section id="tab-settings" class="tab-pane">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Server Setup & Onboarding Hub</h2>
+                    <p>Configure automated welcome greetings, auto-roles, audit logs, and member security from the web.</p>
+                </div>
+                <div class="subtab-pill-bar" style="margin-bottom: 0;">
+                    <button type="button" class="subtab-btn active" onclick="dashboard.switchTab('settings')">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Server Setup
+                    </button>
+                    <button type="button" class="subtab-btn" onclick="dashboard.switchTab('presence')">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        Bot Presence
+                    </button>
+                </div>
+            </div>
+
+            <form id="guild-settings-form">
+                <!-- Suite Card 1: Core Administration & Staff Security -->
+                <div class="editorial-card form-card" style="margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border-clean-subtle); padding-bottom: 12px;">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--pine-deep);">
+                            <line x1="4" y1="21" x2="4" y2="14"/>
+                            <line x1="4" y1="10" x2="4" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="12"/>
+                            <line x1="12" y1="8" x2="12" y2="3"/>
+                            <line x1="20" y1="21" x2="20" y2="16"/>
+                            <line x1="20" y1="12" x2="20" y2="3"/>
+                            <line x1="1" y1="14" x2="7" y2="14"/>
+                            <line x1="9" y1="8" x2="15" y2="8"/>
+                            <line x1="17" y1="16" x2="23" y2="16"/>
+                        </svg>
+                        <h3 style="font-family: var(--font-heading); font-size: 16px; font-weight: 800; color: var(--pine-deep); margin: 0;">
+                            1. Core Administration & Permissions
+                        </h3>
+                    </div>
+
+                    <div class="clean-form-row">
+                        <div class="clean-form-group flex-1">
+                            <label for="setting-prefix">Message Command Prefix</label>
+                            <input type="text" id="setting-prefix" class="clean-input-box" placeholder="!" maxlength="5">
+                            <span class="field-hint">Prefix for legacy text commands (slash commands <code>/</code> are always active).</span>
+                        </div>
+                        <div class="clean-form-group flex-1">
+                            <label for="setting-modrole">Moderator Staff Role</label>
+                            <select id="setting-modrole" class="clean-input-box">
+                                <option value="">Select Moderator Role...</option>
+                            </select>
+                            <span class="field-hint">Role authorized to run staff moderation commands.</span>
+                        </div>
+                        <div class="clean-form-group flex-1">
+                            <label for="setting-audit-chan">Audit Logging Channel</label>
+                            <select id="setting-audit-chan" class="clean-input-box">
+                                <option value="">Disabled / None</option>
+                            </select>
+                            <span class="field-hint">Receives moderation, joins, and message delete logs.</span>
+                        </div>
+                    </div>
+
+                    <div class="clean-form-row">
+                        <div class="clean-form-group flex-2">
+                            <label for="setting-autorole">Auto-Role (Granted on Member Join)</label>
+                            <select id="setting-autorole" class="clean-input-box">
+                                <option value="">Disabled / None</option>
+                            </select>
+                            <span class="field-hint">Automatically assigns this role to every new user who joins.</span>
+                        </div>
+                        <div class="clean-form-group flex-1">
+                            <label for="setting-autorole-delay">Auto-Role Delay</label>
+                            <select id="setting-autorole-delay" class="clean-input-box">
+                                <option value="0">Instant (0s)</option>
+                                <option value="5">5 Seconds Delay</option>
+                                <option value="10">10 Seconds Delay</option>
+                                <option value="30">30 Seconds Delay</option>
+                            </select>
+                            <span class="field-hint">Prevents bot raid race conditions.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suite Card 2: Welcome Onboarding Suite & Live Simulator -->
+                <div class="editorial-card form-card" style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-clean-subtle); padding-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #108A65;">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <line x1="20" y1="8" x2="20" y2="14"/>
+                                <line x1="23" y1="11" x2="17" y2="11"/>
+                            </svg>
+                            <h3 style="font-family: var(--font-heading); font-size: 16px; font-weight: 800; color: var(--pine-deep); margin: 0;">
+                                2. Automated Welcome Onboarding
+                            </h3>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--ink-muted);">Welcome System:</span>
+                            <label class="editorial-switch">
+                                <input type="checkbox" id="setting-welcome-toggle" checked>
+                                <span class="slider-pill"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="broadcast-two-column" style="gap: 20px;">
+                        <!-- Left: Form inputs -->
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div class="clean-form-row">
+                                <div class="clean-form-group flex-2">
+                                    <label for="setting-welcome-chan">Welcome Target Channel</label>
+                                    <select id="setting-welcome-chan" class="clean-input-box">
+                                        <option value="">Disabled / None</option>
+                                    </select>
+                                </div>
+                                <div class="clean-form-group flex-1" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
+                                        <input type="checkbox" id="setting-welcome-ping" style="accent-color: var(--pine-deep); width: 16px; height: 16px;">
+                                        <span style="font-size: 13px; font-weight: 600; color: var(--pine-deep);">Ping New Member</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="clean-form-row">
+                                <div class="clean-form-group flex-2">
+                                    <label for="setting-welcome-title">Embed Card Title</label>
+                                    <input type="text" id="setting-welcome-title" class="clean-input-box" value="🎉 Welcome to Voidwallz!">
+                                </div>
+                                <div class="clean-form-group flex-1">
+                                    <label for="setting-welcome-color">Accent Border Color</label>
+                                    <input type="color" id="setting-welcome-color" class="clean-color-picker" value="#113E35">
+                                </div>
+                            </div>
+
+                            <div class="clean-form-group">
+                                <label for="setting-welcome-msg">Welcome Message Body</label>
+                                <textarea id="setting-welcome-msg" class="clean-input-box clean-textarea" rows="3" placeholder="Welcome {user} to {server}! You are member #{count}."></textarea>
+                                <span class="field-hint">Placeholders: <code>{user}</code> (mention), <code>{username}</code>, <code>{server}</code>, <code>{count}</code> (member count)</span>
+                            </div>
+
+                            <div class="clean-form-row">
+                                <div class="clean-form-group flex-1">
+                                    <label for="setting-welcome-img">Banner Image / GIF URL (Optional)</label>
+                                    <input type="url" id="setting-welcome-img" class="clean-input-box" placeholder="https://example.com/welcome.gif">
+                                </div>
+                                <div class="clean-form-group flex-1">
+                                    <label for="setting-welcome-thumb">Thumbnail / Avatar URL (Optional)</label>
+                                    <input type="url" id="setting-welcome-thumb" class="clean-input-box" placeholder="Leave blank for joining user's avatar">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; margin-top: 6px;">
+                                <button type="button" id="btn-test-welcome" class="btn-clean-outline" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px;">
+                                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                    </svg>
+                                    ⚡ Send Test Welcome to Discord
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right: Live Welcome Simulator Preview -->
+                        <div class="preview-card" style="padding: 16px; background: #FAF8F5; border-radius: 10px; border: 1px dashed var(--border-clean);">
+                            <span class="preview-header-label">Live Welcome Simulator</span>
+                            <div class="discord-embed-simulator" style="margin-top: 10px;">
+                                <div id="sim-welcome-bar" class="sim-color-bar" style="background-color: #113E35;"></div>
+                                <div class="sim-embed-inner">
+                                    <div class="sim-author-line">
+                                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="8.5" cy="7" r="4"/>
+                                        </svg>
+                                        <span>New Member Joined</span>
+                                    </div>
+                                    <div class="sim-body-grid">
+                                        <div class="sim-text-block">
+                                            <div id="sim-welcome-title" class="sim-title">🎉 Welcome to Voidwallz!</div>
+                                            <div id="sim-welcome-desc" class="sim-description">Welcome @User to Voidwallz! You are member #2.</div>
+                                        </div>
+                                        <img id="sim-welcome-thumb" class="sim-thumb-img hidden" alt="Thumbnail" />
+                                    </div>
+                                    <img id="sim-welcome-img" class="sim-banner-img hidden" alt="Welcome Banner" />
+                                    <div class="sim-footer-line">
+                                        <span>Welcome to Voidwallz!</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suite Card 3: Member Farewell / Goodbye System -->
+                <div class="editorial-card form-card" style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-clean-subtle); padding-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #E11D48;">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            <h3 style="font-family: var(--font-heading); font-size: 16px; font-weight: 800; color: var(--pine-deep); margin: 0;">
+                                3. Member Farewell & Goodbye System
+                            </h3>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--ink-muted);">Goodbye System:</span>
+                            <label class="editorial-switch">
+                                <input type="checkbox" id="setting-goodbye-toggle">
+                                <span class="slider-pill"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="clean-form-row">
+                        <div class="clean-form-group flex-1">
+                            <label for="setting-goodbye-chan">Goodbye Target Channel</label>
+                            <select id="setting-goodbye-chan" class="clean-input-box">
+                                <option value="">Disabled / None</option>
+                            </select>
+                        </div>
+                        <div class="clean-form-group flex-2">
+                            <label for="setting-goodbye-msg">Farewell Message Template</label>
+                            <input type="text" id="setting-goodbye-msg" class="clean-input-box" value="{user} has left the server. We are now at {count} members.">
+                        </div>
+                    </div>
+                    <div class="clean-form-row">
+                        <div class="clean-form-group flex-1">
+                            <label for="setting-goodbye-img">Banner Image / GIF URL (Optional)</label>
+                            <input type="url" id="setting-goodbye-img" class="clean-input-box" placeholder="https://example.com/farewell.gif">
+                        </div>
+                        <div class="clean-form-group flex-1">
+                            <label for="setting-goodbye-thumb">Thumbnail / Icon URL (Optional)</label>
+                            <input type="url" id="setting-goodbye-thumb" class="clean-input-box" placeholder="Leave blank for departing user's avatar">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suite Card 4: Automated Server Infrastructure & Resource Provisioner -->
+                <div class="editorial-card form-card" style="margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--border-clean-subtle); padding-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--pine-deep);">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            </svg>
+                            <h3 style="font-size: 16px; font-weight: 700; color: var(--pine-deep); margin: 0;">Automated Server Infrastructure & Provisioner</h3>
+                        </div>
+                        <span class="field-hint" style="margin: 0;">One-click creation for channels, categories & roles</span>
+                    </div>
+
+                    <p style="font-size: 13.5px; color: var(--ink-muted); margin-bottom: 16px;">
+                        Instantly build complete channel trees, private categories, and staff roles directly into Discord with matching permissions.
+                    </p>
+
+                    <!-- Provisioning Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px;">
+                        <!-- Suite 1: Tickets -->
+                        <div style="background: rgba(17, 62, 53, 0.03); border: 1px solid rgba(17, 62, 53, 0.08); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <strong style="font-size: 13.5px; color: var(--pine-deep); display: block; margin-bottom: 4px;">🎫 Support Ticket Suite</strong>
+                                <p style="font-size: 12px; color: var(--ink-muted); margin-bottom: 12px;">Creates <code>🎫・SUPPORT TICKETS</code>, <code>📁・CLOSED TICKETS</code>, staff role, <code>•┃tickets</code> & panel.</p>
+                            </div>
+                            <button type="button" class="btn-solid-dark btn-sm" onclick="dashboard.provisionTickets()">
+                                ⚡ Provision Tickets
+                            </button>
+                        </div>
+
+                        <!-- Suite 2: Verification -->
+                        <div style="background: rgba(17, 62, 53, 0.03); border: 1px solid rgba(17, 62, 53, 0.08); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <strong style="font-size: 13.5px; color: var(--pine-deep); display: block; margin-bottom: 4px;">🛡️ Verification Suite</strong>
+                                <p style="font-size: 12px; color: var(--ink-muted); margin-bottom: 12px;">Creates <code>🛡️・SECURITY GATEWAY</code>, <code>•┃verify</code>, <code>👤・Member</code> role & gate.</p>
+                            </div>
+                            <button type="button" class="btn-solid-dark btn-sm" onclick="dashboard.provisionVerification()">
+                                ⚡ Provision Verification
+                            </button>
+                        </div>
+
+                        <!-- Suite 3: Onboarding -->
+                        <div style="background: rgba(17, 62, 53, 0.03); border: 1px solid rgba(17, 62, 53, 0.08); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <strong style="font-size: 13.5px; color: var(--pine-deep); display: block; margin-bottom: 4px;">👋 Onboarding Suite</strong>
+                                <p style="font-size: 12px; color: var(--ink-muted); margin-bottom: 12px;">Creates <code>📌・INFORMATION</code>, <code>•┃welcome</code>, <code>•┃rules</code>, auto-role & rules poster.</p>
+                            </div>
+                            <button type="button" class="btn-solid-dark btn-sm" onclick="dashboard.provisionOnboarding()">
+                                ⚡ Provision Onboarding
+                            </button>
+                        </div>
+
+                        <!-- Suite 4: Audit & Moderation -->
+                        <div style="background: rgba(17, 62, 53, 0.03); border: 1px solid rgba(17, 62, 53, 0.08); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <strong style="font-size: 13.5px; color: var(--pine-deep); display: block; margin-bottom: 4px;">🔒 Audit & Security Suite</strong>
+                                <p style="font-size: 12px; color: var(--ink-muted); margin-bottom: 12px;">Creates <code>🛡️・ADMIN & AUDIT</code>, <code>•┃logs</code> channel, and <code>🛡️・Moderator</code> staff role.</p>
+                            </div>
+                            <button type="button" class="btn-solid-dark btn-sm" onclick="dashboard.provisionAudit()">
+                                ⚡ Provision Audit Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 1-Click Master Provisioning Banner -->
+                    <div style="background: linear-gradient(135deg, rgba(17,62,53,0.08), rgba(16,138,101,0.06)); border: 1px dashed var(--pine-deep); border-radius: var(--radius-md); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <div>
+                            <strong style="font-size: 14px; color: var(--pine-deep); display: block; margin-bottom: 2px;">⚡ 1-Click Complete Server Architecture Setup</strong>
+                            <span style="font-size: 12.5px; color: var(--ink-muted);">Provisions all 4 suites in Discord with complete channels, categories, roles, and deployed setup panels.</span>
+                        </div>
+                        <button type="button" class="btn-solid-dark" style="padding: 10px 22px; font-weight: 700; white-space: nowrap;" onclick="dashboard.provisionFull()">
+                            🚀 Deploy Complete Architecture
+                        </button>
+                    </div>
+
+                    <!-- Custom Resource Creator -->
+                    <div style="background: #FFFFFF; border: 1px solid var(--border-clean-subtle); border-radius: var(--radius-md); padding: 16px;">
+                        <h4 style="font-size: 13.5px; font-weight: 700; color: var(--pine-deep); margin-bottom: 12px;">Quick Discord Resource Creator</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto; gap: 10px; align-items: end;">
+                            <div>
+                                <label style="font-size: 11.5px; font-weight: 600; color: var(--ink-muted); display: block; margin-bottom: 4px;">Resource Type</label>
+                                <select id="custom-res-type" class="clean-input-box" style="padding: 8px 12px; font-size: 12.5px;">
+                                    <option value="text">Text Channel</option>
+                                    <option value="category">Category</option>
+                                    <option value="voice">Voice Channel</option>
+                                    <option value="role">Role</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 11.5px; font-weight: 600; color: var(--ink-muted); display: block; margin-bottom: 4px;">Name</label>
+                                <input type="text" id="custom-res-name" class="clean-input-box" placeholder="e.g. •┃chat or VIP" style="padding: 8px 12px; font-size: 12.5px;">
+                            </div>
+                            <div id="custom-res-parent-group">
+                                <label style="font-size: 11.5px; font-weight: 600; color: var(--ink-muted); display: block; margin-bottom: 4px;">Parent Category (Optional)</label>
+                                <select id="custom-res-parent" class="clean-input-box" style="padding: 8px 12px; font-size: 12.5px;">
+                                    <option value="">(None / Root)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button type="button" class="btn-solid-dark" style="padding: 8px 18px; font-size: 12.5px; white-space: nowrap;" onclick="dashboard.createCustomResource()">
+                                    + Create in Discord
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-cta-row" style="margin-top: 24px;">
+                    <button type="submit" class="btn-solid-dark" style="padding: 14px 32px; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        Save Server Configuration
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- TAB: INTERACTIVE PANEL STUDIO -->
+        <!-- ========================================================== -->
+        <section id="tab-panels" class="tab-pane">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Creative & Discord Studio</h2>
+                    <p>Deploy formatted server rule cards, wallpaper guidelines, and interactive panel components.</p>
+                </div>
+                <div class="subtab-pill-bar" style="margin-bottom: 0;">
+                    <button type="button" class="subtab-btn" onclick="dashboard.switchTab('broadcast')">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Rules & Posters
+                    </button>
+                    <button type="button" class="subtab-btn active" onclick="dashboard.switchTab('panels')">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3z"/>
+                        </svg>
+                        Interactive Panels
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel Mode Selector -->
+            <div class="subtab-pill-bar">
+                <button type="button" id="btn-subtab-ticket" class="subtab-btn active" onclick="dashboard.switchPanelSubtab('ticket')">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3z"/>
+                        <line x1="13" y1="5" x2="13" y2="19" stroke-dasharray="2 2"/>
+                    </svg>
+                    Ticket Creation Panel
+                </button>
+                <button type="button" id="btn-subtab-verify" class="subtab-btn" onclick="dashboard.switchPanelSubtab('verify')">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <polyline points="9 12 11 14 15 10"/>
+                    </svg>
+                    Verification Gate
+                </button>
+            </div>
+
+            <!-- Subtab 1: Ticket Panel -->
+            <div id="panel-ticket-view" class="broadcast-two-column">
+                <div class="editorial-card form-card">
+                    <!-- Quick Auto-Provision Callout -->
+                    <div class="provision-card-callout" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; background: rgba(17, 62, 53, 0.04); border: 1px solid rgba(17, 62, 53, 0.08); padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--pine-deep); color: #FFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <strong style="font-family: var(--font-heading); font-size: 13.5px; color: var(--pine-deep); display: block;">Auto-Provision Ticket Infrastructure</strong>
+                                <span style="font-size: 12px; color: var(--ink-muted);">Auto-create <code>🎫・TICKETS</code>, <code>📁・CLOSED TICKETS</code>, <code>🎫・Support Staff</code> role & channel in Discord.</span>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-provision-tickets-quick" class="btn-solid-dark" style="padding: 8px 16px; font-size: 12.5px; white-space: nowrap;" onclick="dashboard.provisionTickets()">
+                            ⚡ Auto-Provision
+                        </button>
+                    </div>
+
+                    <form id="ticket-panel-form">
+                        <div class="clean-form-group">
+                            <label for="ticket-panel-channel">Target Text Channel</label>
+                            <select id="ticket-panel-channel" class="clean-input-box" required>
+                                <option value="">Select target channel...</option>
+                            </select>
+                        </div>
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-2">
+                                <label for="ticket-panel-title">Embed Title</label>
+                                <input type="text" id="ticket-panel-title" class="clean-input-box" value="📩 Support Tickets" required>
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="ticket-panel-color">Accent Color</label>
+                                <input type="color" id="ticket-panel-color" class="clean-color-picker" value="#113E35">
+                            </div>
+                        </div>
+                        <div class="clean-form-group">
+                            <label for="ticket-panel-desc">Panel Instructions / Body</label>
+                            <textarea id="ticket-panel-desc" class="clean-input-box clean-textarea" rows="3" required>Need assistance or have a question? Click the button below to open a private support ticket with server staff.</textarea>
+                        </div>
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-1">
+                                <label for="ticket-panel-image">Banner Graphic / GIF URL (Optional)</label>
+                                <input type="url" id="ticket-panel-image" class="clean-input-box" placeholder="https://example.com/ticket-banner.gif">
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="ticket-panel-thumbnail">Thumbnail / Icon URL (Optional)</label>
+                                <input type="url" id="ticket-panel-thumbnail" class="clean-input-box" placeholder="https://example.com/ticket-icon.png">
+                            </div>
+                        </div>
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-1">
+                                <label for="ticket-btn-label">Button Label</label>
+                                <input type="text" id="ticket-btn-label" class="clean-input-box" value="Create Ticket" maxlength="32">
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="ticket-staff-role">Support Staff Role</label>
+                                <select id="ticket-staff-role" class="clean-input-box">
+                                    <option value="">Select Staff Role...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-1">
+                                <label for="ticket-category-select">Open Tickets Category</label>
+                                <select id="ticket-category-select" class="clean-input-box">
+                                    <option value="">Automatic / Server Default</option>
+                                </select>
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="ticket-closed-category-select">Closed Archive Category</label>
+                                <select id="ticket-closed-category-select" class="clean-input-box">
+                                    <option value="">Leave In Current Category</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-solid-dark btn-block" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                            Deploy Ticket Panel to Discord
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Ticket Preview -->
+                <div class="editorial-card preview-card">
+                    <span class="preview-header-label">Live Discord Ticket Simulator</span>
+                    <div class="discord-embed-simulator" style="flex-direction: column;">
+                        <div style="display: flex; position: relative; width: 100%;">
+                            <div id="sim-ticket-bar" class="sim-color-bar" style="background-color: #113E35;"></div>
+                            <div class="sim-embed-inner">
+                                <div class="sim-author-line">
+                                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3z"/>
+                                    </svg>
+                                    <span>VoidUtility Ticket System</span>
+                                </div>
+                                <div class="sim-body-grid">
+                                    <div class="sim-text-block">
+                                        <div id="sim-ticket-title" class="sim-title">📩 Support Tickets</div>
+                                        <div id="sim-ticket-desc" class="sim-description">Need assistance or have a question? Click the button below to open a private support ticket with server staff.</div>
+                                    </div>
+                                    <img id="sim-ticket-thumb" class="sim-thumb-img hidden" alt="Thumbnail" />
+                                </div>
+                                <img id="sim-ticket-img" class="sim-banner-img hidden" alt="Ticket Banner Graphic" />
+                                <div class="sim-footer-line">
+                                    <span>VoidUtility Ticket System • Safe & Private</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sim-button-row">
+                            <button type="button" class="discord-sim-btn primary">
+                                <span>📩</span>
+                                <span id="sim-ticket-btn-label">Create Ticket</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtab 2: Verification Gate -->
+            <div id="panel-verify-view" class="broadcast-two-column hidden">
+                <div class="editorial-card form-card">
+                    <!-- Quick Auto-Provision Callout -->
+                    <div class="provision-card-callout" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; background: rgba(17, 62, 53, 0.04); border: 1px solid rgba(17, 62, 53, 0.08); padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 20px;">
+                        <div>
+                            <strong style="font-family: var(--font-heading); font-size: 13.5px; color: var(--pine-deep); display: block;">Auto-Provision Verification Gateway</strong>
+                            <span style="font-size: 12px; color: var(--ink-muted);">Creates <code>🛡️・SECURITY GATEWAY</code> category, <code>•┃verify</code> channel, <code>👤・Member</code> role, and deploys the verification gate.</span>
+                        </div>
+                        <button type="button" id="btn-provision-verify-quick" class="btn-solid-dark" style="padding: 8px 16px; font-size: 12.5px; white-space: nowrap;" onclick="dashboard.provisionVerification()">
+                            ⚡ Auto-Provision
+                        </button>
+                    </div>
+
+                    <form id="verify-panel-form">
+                        <div class="clean-form-group">
+                            <label for="verify-panel-channel">Target Verification Channel</label>
+                            <select id="verify-panel-channel" class="clean-input-box" required>
+                                <option value="">Select target channel...</option>
+                            </select>
+                        </div>
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-2">
+                                <label for="verify-panel-title">Embed Title</label>
+                                <input type="text" id="verify-panel-title" class="clean-input-box" value="🛡️ Member Verification" required>
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="verify-panel-color">Accent Color</label>
+                                <input type="color" id="verify-panel-color" class="clean-color-picker" value="#108A65">
+                            </div>
+                        </div>
+                        <div class="clean-form-group">
+                            <label for="verify-panel-desc">Verification Instructions</label>
+                            <textarea id="verify-panel-desc" class="clean-input-box clean-textarea" rows="3" required>Welcome to the server! Click the green button below to verify your account, unlock all channels, and start chatting.</textarea>
+                        </div>
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-1">
+                                <label for="verify-panel-image">Banner Graphic / GIF URL (Optional)</label>
+                                <input type="url" id="verify-panel-image" class="clean-input-box" placeholder="https://example.com/verify-banner.gif">
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="verify-panel-thumbnail">Thumbnail / Icon URL (Optional)</label>
+                                <input type="url" id="verify-panel-thumbnail" class="clean-input-box" placeholder="https://example.com/shield-icon.png">
+                            </div>
+                        </div>
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-1">
+                                <label for="verify-role-select">Role to Grant Upon Verification</label>
+                                <select id="verify-role-select" class="clean-input-box" required>
+                                    <option value="">Select Member Role...</option>
+                                </select>
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="verify-btn-text">Button Text</label>
+                                <input type="text" id="verify-btn-text" class="clean-input-box" value="Verify Membership" maxlength="32">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-solid-dark btn-block" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <polyline points="9 12 11 14 15 10"/>
+                            </svg>
+                            Deploy Verification Gate to Discord
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Verification Preview -->
+                <div class="editorial-card preview-card">
+                    <span class="preview-header-label">Live Discord Verification Simulator</span>
+                    <div class="discord-embed-simulator" style="flex-direction: column;">
+                        <div style="display: flex; position: relative; width: 100%;">
+                            <div id="sim-verify-bar" class="sim-color-bar" style="background-color: #108A65;"></div>
+                            <div class="sim-embed-inner">
+                                <div class="sim-author-line">
+                                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                    </svg>
+                                    <span>VoidUtility Security Gateway</span>
+                                </div>
+                                <div class="sim-body-grid">
+                                    <div class="sim-text-block">
+                                        <div id="sim-verify-title" class="sim-title">🛡️ Member Verification</div>
+                                        <div id="sim-verify-desc" class="sim-description">Welcome to the server! Click the green button below to verify your account, unlock all channels, and start chatting.</div>
+                                    </div>
+                                    <img id="sim-verify-thumb" class="sim-thumb-img hidden" alt="Thumbnail" />
+                                </div>
+                                <img id="sim-verify-img" class="sim-banner-img hidden" alt="Verification Banner" />
+                                <div class="sim-footer-line">
+                                    <span>VoidUtility Verification Gate • Anti-Raid Protected</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sim-button-row">
+                            <button type="button" class="discord-sim-btn success">
+                                <span>✅</span>
+                                <span id="sim-verify-btn-label">Verify Membership</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- TAB: ECONOMY & LEVELING TREASURY -->
+        <!-- ========================================================== -->
+        <section id="tab-community" class="tab-pane">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Economy & Leveling Treasury</h2>
+                    <p>Live rankings, currency circulation statistics, and owner balance adjustment tools.</p>
+                </div>
+                <button type="button" class="btn-clean-outline" onclick="dashboard.loadCommunityData()">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <polyline points="1 20 1 14 7 14"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    Refresh Data
+                </button>
+            </div>
+
+            <!-- Economy Metrics Strip -->
+            <div class="stats-row-container" style="margin-bottom: 24px;">
+                <div class="editorial-card">
+                    <div class="card-icon-box peach-tint">
+                        <svg class="streamline-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v12M8 10h8M8 14h6"/>
+                        </svg>
+                    </div>
+                    <div class="card-metric-info">
+                        <span class="metric-title">Coins in Circulation</span>
+                        <div class="metric-big-num" id="eco-total-coins">0</div>
+                        <div class="metric-caption">Server Economy Volume</div>
+                    </div>
+                </div>
+
+                <div class="editorial-card">
+                    <div class="card-icon-box pine-tint">
+                        <svg class="streamline-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="6" width="20" height="14" rx="3"/>
+                            <path d="M2 10h20"/>
+                            <circle cx="17" cy="14" r="1.5"/>
+                        </svg>
+                    </div>
+                    <div class="card-metric-info">
+                        <span class="metric-title">Economy Accounts</span>
+                        <div class="metric-big-num" id="eco-total-users">0</div>
+                        <div class="metric-caption">Registered Wallets</div>
+                    </div>
+                </div>
+
+                <div class="editorial-card">
+                    <div class="card-icon-box cream-tint">
+                        <svg class="streamline-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
+                    <div class="card-metric-info">
+                        <span class="metric-title">Average Net Worth</span>
+                        <div class="metric-big-num" id="eco-avg-networth">0</div>
+                        <div class="metric-caption">Per Member Balance</div>
+                    </div>
+                </div>
+
+                <div class="editorial-card">
+                    <div class="card-icon-box terracotta-tint">
+                        <svg class="streamline-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                    </div>
+                    <div class="card-metric-info">
+                        <span class="metric-title">Leveling Engine</span>
+                        <div class="metric-big-num" id="lvl-status-val">Active</div>
+                        <div class="metric-caption">Message XP Tracking</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two-Column Leaderboards & Grant Tools -->
+            <div class="community-two-column">
+                <!-- Left: XP Leaderboard -->
+                <div class="editorial-card form-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="font-family: var(--font-heading); font-size: 17px; font-weight: 800; color: var(--pine-deep); display: flex; align-items: center; gap: 8px;">
+                            <span>⭐</span> Most Active Members (XP)
+                        </h3>
+                    </div>
+                    <div id="xp-leaderboard-list" class="leaderboard-container">
+                        <div style="text-align: center; color: var(--ink-muted); padding: 24px;">Loading server rankings...</div>
+                    </div>
+
+                    <!-- Quick Level Modifier -->
+                    <div class="quick-action-strip">
+                        <h4>Owner Level Override</h4>
+                        <form id="level-override-form" class="quick-action-form">
+                            <input type="text" id="lvl-target-user" class="clean-input-box flex-1" placeholder="User ID (e.g. 15027...)" required style="padding: 8px 12px; font-size: 12.5px;">
+                            <select id="lvl-action-select" class="clean-input-box" style="width: 110px; padding: 8px; font-size: 12.5px;">
+                                <option value="setLevel">Set Level</option>
+                                <option value="addXp">Add XP</option>
+                            </select>
+                            <input type="number" id="lvl-value-input" class="clean-input-box" placeholder="Value" min="0" value="10" required style="width: 80px; padding: 8px 12px; font-size: 12.5px;">
+                            <button type="submit" class="btn-solid-dark" style="padding: 8px 16px; font-size: 12.5px;">Apply</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Economy Richest Members -->
+                <div class="editorial-card form-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="font-family: var(--font-heading); font-size: 17px; font-weight: 800; color: var(--pine-deep); display: flex; align-items: center; gap: 8px;">
+                            <span>💰</span> Server Richest List (Net Worth)
+                        </h3>
+                    </div>
+                    <div id="economy-richest-list" class="leaderboard-container">
+                        <div style="text-align: center; color: var(--ink-muted); padding: 24px;">Loading treasury balances...</div>
+                    </div>
+
+                    <!-- Quick Currency Grant Tool -->
+                    <div class="quick-action-strip">
+                        <h4>Owner Currency Grant / Deduct</h4>
+                        <form id="economy-grant-form" class="quick-action-form">
+                            <input type="text" id="eco-target-user" class="clean-input-box flex-1" placeholder="User ID (e.g. 15027...)" required style="padding: 8px 12px; font-size: 12.5px;">
+                            <input type="number" id="eco-wallet-change" class="clean-input-box" placeholder="Wallet ±" value="500" style="width: 90px; padding: 8px 12px; font-size: 12.5px;">
+                            <input type="number" id="eco-bank-change" class="clean-input-box" placeholder="Bank ±" value="0" style="width: 90px; padding: 8px 12px; font-size: 12.5px;">
+                            <button type="submit" class="btn-solid-dark" style="padding: 8px 16px; font-size: 12.5px;">Grant</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- TAB 5: BROADCAST STUDIO -->
+        <!-- ========================================================== -->
+        <section id="tab-broadcast" class="tab-pane">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Creative & Discord Studio</h2>
+                    <p>Deploy formatted server rule cards, wallpaper guidelines, and interactive panel components.</p>
+                </div>
+                <div class="subtab-pill-bar" style="margin-bottom: 0;">
+                    <button type="button" class="subtab-btn active" onclick="dashboard.switchTab('broadcast')">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Rules & Posters
+                    </button>
+                    <button type="button" class="subtab-btn" onclick="dashboard.switchTab('panels')">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3z"/>
+                        </svg>
+                        Interactive Panels
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preset Template Selector with Streamline Icons -->
+            <div class="subtab-pill-bar" style="margin-bottom: 22px;">
+                <button type="button" id="btn-tpl-rules" class="subtab-btn active" onclick="dashboard.loadTemplate('rules')">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    📜 Community Rules Poster
+                </button>
+                <button type="button" id="btn-tpl-wallpapers" class="subtab-btn" onclick="dashboard.loadTemplate('wallpapers')">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    🖼️ Wallpaper Standards Card
+                </button>
+                <button type="button" id="btn-tpl-leveling" class="subtab-btn" onclick="dashboard.loadTemplate('leveling')">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    🏆 Level Perks Guide
+                </button>
+                <button type="button" id="btn-tpl-blank" class="subtab-btn" onclick="dashboard.loadTemplate('blank')">
+                    <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                    ✍️ Blank Custom Embed
+                </button>
+            </div>
+
+            <div class="broadcast-two-column">
+                <!-- Composer -->
+                <div class="editorial-card form-card">
+                    <form id="broadcast-form">
+                        <div class="clean-form-group">
+                            <label for="broadcast-channel-select">Target Text Channel</label>
+                            <select id="broadcast-channel-select" class="clean-input-box" required>
+                                <option value="">Select target channel...</option>
+                            </select>
+                        </div>
+
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-2">
+                                <label for="broadcast-title-input">Embed Title</label>
+                                <input type="text" id="broadcast-title-input" class="clean-input-box" placeholder="Server Announcement" required>
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="broadcast-color-input">Border Accent</label>
+                                <input type="color" id="broadcast-color-input" class="clean-color-picker" value="#114232">
+                            </div>
+                        </div>
+
+                        <div class="clean-form-group">
+                            <label for="broadcast-desc-input">Description / Body (Markdown)</label>
+                            <textarea id="broadcast-desc-input" class="clean-input-box clean-textarea" rows="5" placeholder="Write your announcement details here..." required></textarea>
+                        </div>
+
+                        <div class="clean-form-row">
+                            <div class="clean-form-group flex-1">
+                                <label for="broadcast-image-input">Banner Image / GIF URL (Optional)</label>
+                                <input type="url" id="broadcast-image-input" class="clean-input-box" placeholder="https://example.com/banner.gif">
+                            </div>
+                            <div class="clean-form-group flex-1">
+                                <label for="broadcast-thumb-input">Thumbnail / Icon URL (Optional)</label>
+                                <input type="url" id="broadcast-thumb-input" class="clean-input-box" placeholder="https://example.com/icon.png">
+                            </div>
+                        </div>
+
+                        <div class="clean-form-group">
+                            <label for="broadcast-ping-select">Audience Mention</label>
+                            <select id="broadcast-ping-select" class="clean-input-box">
+                                <option value="none">No Mention</option>
+                                <option value="here">@here (Online Members)</option>
+                                <option value="everyone">@everyone (All Members)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn-solid-dark btn-block" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                            Dispatch to Discord Channel
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Preview -->
+                <div class="editorial-card preview-card">
+                    <span class="preview-header-label">Live Discord Embed Card</span>
+                    <div class="discord-embed-simulator">
+                        <div id="preview-color-bar" class="sim-color-bar" style="background-color: #114232;"></div>
+                        <div class="sim-embed-inner">
+                            <div class="sim-author-line">
+                                <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                </svg>
+                                <span>VoidUtility Administration</span>
+                            </div>
+                            <div class="sim-body-grid">
+                                <div class="sim-text-block">
+                                    <div id="preview-title" class="sim-title">Server Announcement</div>
+                                    <div id="preview-desc" class="sim-description">Write your announcement details here...</div>
+                                </div>
+                                <img id="preview-thumb" class="sim-thumb-img hidden" alt="Thumbnail" />
+                            </div>
+                            <img id="preview-img" class="sim-banner-img hidden" alt="Announcement Banner Graphic" />
+                            <div class="sim-footer-line">
+                                <span>Broadcasted by Server Administration • VoidUtility</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- TAB 6: CONSOLE LOGS -->
+        <!-- ========================================================== -->
+        <section id="tab-logs" class="tab-pane">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Real-Time Console Stream</h2>
+                    <p>Live operational logging stream direct from the bot host process.</p>
+                </div>
+                <div class="logs-header-actions">
+                    <select id="log-filter-select" class="clean-select-pill">
+                        <option value="all">All Levels</option>
+                        <option value="info">Info</option>
+                        <option value="warn">Warnings</option>
+                        <option value="error">Errors</option>
+                    </select>
+                    <button id="clear-logs-btn" class="btn-clean-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <svg class="streamline-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        Clear View
+                    </button>
+                </div>
+            </div>
+
+            <div class="editorial-terminal-card">
+                <div class="terminal-bar">
+                    <div class="terminal-window-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <span class="terminal-label">voidutility@server: ~ console.stream</span>
+                    <span id="log-count-indicator" class="terminal-count-badge">0 entries</span>
+                </div>
+                <div id="logs-container" class="terminal-feed">
+                    <div class="log-line info">
+                        <span class="log-t">[00:00:00]</span>
+                        <span class="log-tag info">INFO</span>
+                        <span class="log-text">Connecting to real-time console stream...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Clean Toast Notifications -->
+    <div id="toast-container" class="toast-stack"></div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
